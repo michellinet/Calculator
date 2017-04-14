@@ -9,17 +9,70 @@
 import UIKit
 
 class ViewController: UIViewController {
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+    
+    @IBOutlet weak var display: UILabel!
+    
+    var userIsInTheMiddleOfTyping = false {
+        didSet {
+            if !userIsInTheMiddleOfTyping {
+                userIsInTheMiddleOfFloatingPointNumber = false
+            }
+        }
     }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    
+    var userIsInTheMiddleOfFloatingPointNumber = false
+    
+    @IBAction func touchDigit(_ sender: UIButton) {
+        var digit = sender.currentTitle!
+        
+        if digit == "." {
+            if userIsInTheMiddleOfFloatingPointNumber {
+                return
+            }
+            
+            if !userIsInTheMiddleOfTyping {
+                digit = "0."
+            }
+            
+            userIsInTheMiddleOfFloatingPointNumber = true
+        }
+        
+        if userIsInTheMiddleOfTyping {
+            let textCurrentlyInDisplay = display.text!
+            display.text = textCurrentlyInDisplay + digit
+        } else {
+            display.text = digit
+            userIsInTheMiddleOfTyping = true
+        }
     }
-
-
+    
+    var displayValue: Double {             //computed property
+        get {
+            return Double(display.text!)!
+        }
+        set {
+            if newValue == 0.0 {
+                display.text = "0"
+            } else {
+                display.text = String(newValue)
+            }
+        }
+    }
+    
+    private var brain = CalculatorBrain()
+    
+    @IBAction func performOperation(_ sender: UIButton) {
+        if userIsInTheMiddleOfTyping {
+            brain.setOperand(displayValue)
+            userIsInTheMiddleOfTyping = false
+        }
+        
+        if let mathematicalSymbol = sender.currentTitle {
+            brain.performOperation(mathematicalSymbol)
+        }
+        
+        if let result = brain.result {
+                displayValue = result
+        }
+    }
 }
-
