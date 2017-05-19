@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  CalculatorViewController.swift
 //  Calculator
 //
 //  Created by Michelline Tran on 3/14/17.
@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class CalculatorViewController: UIViewController {
     
     @IBOutlet weak var display: UILabel!
     
@@ -17,6 +17,14 @@ class ViewController: UIViewController {
             if !userIsInTheMiddleOfTyping {
                 userIsInTheMiddleOfFloatingPointNumber = false
             }
+        }
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        brain.addUnaryOperation(named: "✅") { [unowned self] in
+            self.display.textColor = UIColor.green
+            return sqrt($0)
         }
     }
     

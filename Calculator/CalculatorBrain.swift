@@ -16,11 +16,13 @@ import Foundation
 //    return op1 * op2
 //}
 
-
 struct CalculatorBrain {
     
-    private var accumulator: Double?
+    mutating func addUnaryOperation(named symbol: String, _ operation: @escaping (Double) -> Double) {
+        operations[symbol] = Operation.unaryOperation(operation)
+    }
     
+    private var accumulator: Double?
     
     private enum Operation {
         case constant(Double)
@@ -101,6 +103,15 @@ struct CalculatorBrain {
     mutating func setOperand(_ operand: Double) {           //due to copy-on-write
         accumulator = operand
     }
+    
+   /* Add the capability to your CalculatorBrain to allow the input of variables. Do so by
+    implementing the following API in your CalculatorBrain ... func setOperand(variable named: String)
+    This must do exactly what you would imagine it would: it inputs a “variable” as the operand (e.g. setOperand(variable: “x”) would input a variable named x). 
+    Setting the operand to x and then performing the operation cos would mean cos(x) is in your CalculatorBrain.
+    //func setOperand(variable named: String) {
+      }
+   */
+    
     
     //MARK: Result
     var result: Double? {
