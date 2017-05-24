@@ -24,12 +24,16 @@ struct CalculatorBrain {
     
     private var accumulator: Double?
     
+    private var stack = [Operation]()
+    
     private enum Operation {
         case constant(Double)
         case unaryOperation((Double) -> Double)
         case binaryOperation((Double,Double) -> Double)
         case equals
         case clear
+        case operand(Double)
+        case variable(String)
     }
     
     private var operations: Dictionary<String,Operation> = [
@@ -69,6 +73,8 @@ struct CalculatorBrain {
                 performPendingBinaryOperation()
             case .clear :
                 accumulator = 0
+            default :
+                break
             }
             
         }
@@ -98,25 +104,18 @@ struct CalculatorBrain {
         return pendingBinaryOperation != nil
     }
     
-    
     //MARK: Set Operand
     mutating func setOperand(_ operand: Double) {           //due to copy-on-write
         accumulator = operand
     }
     
-   /* Add the capability to your CalculatorBrain to allow the input of variables. Do so by
-    implementing the following API in your CalculatorBrain ... func setOperand(variable named: String)
-    This must do exactly what you would imagine it would: it inputs a “variable” as the operand (e.g. setOperand(variable: “x”) would input a variable named x). 
-    Setting the operand to x and then performing the operation cos would mean cos(x) is in your CalculatorBrain.
-    //func setOperand(variable named: String) {
-      }
-   */
-    
-    
+    mutating func setOperand(variable named: String) {
+        stack.append(Operation.variable(named))
+    }
+
     //MARK: Result
     var result: Double? {
         return accumulator
     }
-    
     
 }
