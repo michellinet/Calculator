@@ -40,7 +40,7 @@ struct CalculatorBrain {
         "+" : Operation.binaryOperation({ $0 + $1 }),
         "−" : Operation.binaryOperation({ $0 - $1 }),
         "÷" : Operation.binaryOperation({ $0 / $1 }),
-        "×" : Operation.binaryOperation({ $0 * $1 }),       //previously, Operation.binaryOperation(multiply), but I do it for da closure
+        "×" : Operation.binaryOperation({ $0 * $1 }),
         "π" : Operation.constant(Double.pi),
         "e" : Operation.constant(M_E),
         "√" : Operation.unaryOperation(sqrt),
@@ -48,13 +48,15 @@ struct CalculatorBrain {
         "cos" : Operation.unaryOperation(cos),
         "sin" : Operation.unaryOperation(sin),
         "tan" : Operation.unaryOperation(tan),
-        "±" : Operation.unaryOperation({ -$0 }),            //previously, Operation.unaryOperation(changeSign), but closures
+        "±" : Operation.unaryOperation({ -$0 }),
         "=" : Operation.equals,
         "C" : Operation.clear
     ]
     
     mutating func performOperation(_ symbol: String) {
         if let operation = operations[symbol] {
+            stack.append(operation)
+            
             switch operation {
             case .constant(let value):
                 accumulator = value
@@ -64,9 +66,7 @@ struct CalculatorBrain {
                 }
             case .binaryOperation(let function) :
                 if accumulator != nil {
-                    
                     pendingBinaryOperation = PendingBinaryOperation(function: function, firstOperand: accumulator!)
-                    
                     accumulator = nil
                 }
             case .equals :
@@ -100,12 +100,57 @@ struct CalculatorBrain {
     
     private var pendingBinaryOperation: PendingBinaryOperation?
     
-    private var resultIsPending: Bool {
-        return pendingBinaryOperation != nil
+    //MARK: Evaluate
+    
+    func evaluate(using variables: Dictionary<String,Double>? = nil)
+        -> (result: Double?, isPending: Bool, description: String) {
+            
+            var acc: Double = 0.0
+            var pendingBinaryOperation: PendingBinaryOperation?
+            var pendingStatus: Bool {
+                return pendingBinaryOperation != nil
+            }
+            
+            for element in stack {
+                
+                switch element {
+                case .constant(let value):
+                    if let pending = pendingBinaryOperation {
+                        acc = pending.perform(with: value)
+                    } else {
+                        acc = value
+                    }
+                    
+                    pendingBinaryOperation = nil
+                
+                case .variable(let name):
+                    let value = variables?[name] ?? 0.0
+                    
+                    if let pending = pendingBinaryOperation {
+                        acc = pending.perform(with: value)
+                    } else {
+                        acc = value
+                    }
+                    
+                    pendingBinaryOperation = nil
+                    
+                case .unaryOperation(let function):
+                    acc = function(acc)
+               
+                case .binaryOperation(let function):
+                    pendingBinaryOperation = PendingBinaryOperation(function: function, firstOperand: acc)
+                
+                default:
+                    break
+                }
+            }
+            
+            return (acc, pendingStatus, "")
     }
     
     //MARK: Set Operand
     mutating func setOperand(_ operand: Double) {           //due to copy-on-write
+        stack.append(Operation.constant(operand))
         accumulator = operand
     }
     
@@ -115,7 +160,11 @@ struct CalculatorBrain {
 
     //MARK: Result
     var result: Double? {
-        return accumulator
+        return evaluate().result
+    }
+    
+    var resultIsPending: Bool {
+        return evaluate().isPending
     }
     
 }
