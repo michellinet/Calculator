@@ -69,6 +69,23 @@ class CalculatorViewController: UIViewController {
     
     private var brain = CalculatorBrain()
     
+//    var memoryDictionary: Dictionary<String, Double>?
+    
+    @IBAction func storeMemory(_ sender: Any) {
+        brain.memory = [brain.M: displayValue]
+        let memory = brain.evaluate(using: brain.memory)
+        displayValue = memory.result ?? 0.0
+        
+        let currentMemory = brain.memory?[brain.M] ?? 0.0
+        memoryValue.text = String(describing: currentMemory)
+    }
+    
+    @IBAction func MPressed(_ sender: Any) {
+        brain.setOperand(variable: "M")
+    }
+
+    @IBOutlet weak var memoryValue: UILabel!
+    
     @IBAction func performOperation(_ sender: UIButton) {
         if userIsInTheMiddleOfTyping {
             brain.setOperand(displayValue)
@@ -82,5 +99,8 @@ class CalculatorViewController: UIViewController {
         if let result = brain.result {
                 displayValue = result
         }
+        
+        let currentMemory = brain.memory?[brain.M] ?? 0.0
+        memoryValue.text = String(describing: currentMemory)
     }
 }

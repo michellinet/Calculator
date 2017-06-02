@@ -18,10 +18,6 @@ import Foundation
 
 struct CalculatorBrain {
     
-    mutating func addUnaryOperation(named symbol: String, _ operation: @escaping (Double) -> Double) {
-        operations[symbol] = Operation.unaryOperation(operation)
-    }
-    
     private var accumulator: Double?
     
     private var stack = [Operation]()
@@ -56,7 +52,7 @@ struct CalculatorBrain {
     mutating func performOperation(_ symbol: String) {
         if let operation = operations[symbol] {
             stack.append(operation)
-            
+
             switch operation {
             case .constant(let value):
                 accumulator = value
@@ -72,13 +68,18 @@ struct CalculatorBrain {
             case .equals :
                 performPendingBinaryOperation()
             case .clear :
-                accumulator = 0
-            default :
+                stack = []
+                memory = nil
+            default:
                 break
             }
             
         }
         
+    }
+    
+    mutating func addUnaryOperation(named symbol: String, _ operation: @escaping (Double) -> Double) {
+        operations[symbol] = Operation.unaryOperation(operation)
     }
     
     //MARK: Pending Binary Operation implementation
@@ -102,8 +103,17 @@ struct CalculatorBrain {
     
     //MARK: Evaluate
     
+    var memory: Dictionary<String,Double>?
+    
     func evaluate(using variables: Dictionary<String,Double>? = nil)
         -> (result: Double?, isPending: Bool, description: String) {
+            
+            var lookup: Dictionary<String,Double>?
+            if let variables = variables {
+                lookup = variables
+            } else {
+                lookup = memory
+            }
             
             var acc: Double = 0.0
             var pendingBinaryOperation: PendingBinaryOperation?
@@ -124,7 +134,7 @@ struct CalculatorBrain {
                     pendingBinaryOperation = nil
                 
                 case .variable(let name):
-                    let value = variables?[name] ?? 0.0
+                    let value = lookup?[name] ?? 0.0
                     
                     if let pending = pendingBinaryOperation {
                         acc = pending.perform(with: value)
@@ -149,7 +159,7 @@ struct CalculatorBrain {
     }
     
     //MARK: Set Operand
-    mutating func setOperand(_ operand: Double) {           //due to copy-on-write
+    mutating func setOperand(_ operand: Double) {
         stack.append(Operation.constant(operand))
         accumulator = operand
     }
@@ -157,7 +167,20 @@ struct CalculatorBrain {
     mutating func setOperand(variable named: String) {
         stack.append(Operation.variable(named))
     }
-
+    
+    //MARK: M
+    
+//    var M: Double {
+//        get {
+//            return 0.0
+//        }
+//        set (newM){
+//            M = newM
+//        }
+//    }
+    
+    var M: String = "M"
+    
     //MARK: Result
     var result: Double? {
         return evaluate().result
